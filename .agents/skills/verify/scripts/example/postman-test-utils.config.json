@@ -1,0 +1,5 @@
+{
+  "collection": ".agents/skills/verify/scripts/example/health.postman_collection.json",
+  "environment": ".agents/skills/verify/scripts/example/local.postman_environment.json",
+  "validation": { "suite": "request-validation" }
+}

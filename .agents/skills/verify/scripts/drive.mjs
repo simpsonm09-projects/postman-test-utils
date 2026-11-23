@@ -4,7 +4,7 @@
 // Build first, then run from the repository root:
 //
 //   npm ci && npm run build
-//   node .claude/skills/verify/scripts/drive.mjs --out artifacts/verify/postman-test-utils
+//   node .agents/skills/verify/scripts/drive.mjs --out artifacts/verify/postman-test-utils
 //
 // The helper starts its own loopback server, copies the example fixtures into a
 // scratch directory, drives the built CLI and the public library API, and exits
@@ -20,9 +20,27 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(scriptDir, "../../../..");
 const exampleDir = join(scriptDir, "example");
-const cliPath = join(repoRoot, "packages", "postman-test-utils", "dist", "cli.js");
-const engineDist = join(repoRoot, "packages", "postman-test-utils", "dist", "index.js");
-const secretsDist = join(repoRoot, "packages", "postman-secrets", "dist", "index.js");
+const cliPath = join(
+  repoRoot,
+  "packages",
+  "postman-test-utils",
+  "dist",
+  "cli.js",
+);
+const engineDist = join(
+  repoRoot,
+  "packages",
+  "postman-test-utils",
+  "dist",
+  "index.js",
+);
+const secretsDist = join(
+  repoRoot,
+  "packages",
+  "postman-secrets",
+  "dist",
+  "index.js",
+);
 
 // A throwaway fixture value, not a credential. It proves a resolved secret
 // reaches newman's in-memory environment and never reaches an emitted file.
@@ -123,7 +141,13 @@ async function writeFixtures(scratch, baseUrl) {
   await writeFile(environmentPath, JSON.stringify(environment, null, 2));
 
   const configPath = join(scratch, "config.json");
-  await writeFile(configPath, JSON.stringify({ collection: collectionPath, environment: environmentPath }));
+  await writeFile(
+    configPath,
+    JSON.stringify({
+      collection: collectionPath,
+      environment: environmentPath,
+    }),
+  );
 
   const validationConfigPath = join(scratch, "validation-config.json");
   await writeFile(
@@ -135,16 +159,31 @@ async function writeFixtures(scratch, baseUrl) {
     }),
   );
 
-  const failingCollectionPath = join(scratch, "failing.postman_collection.json");
-  await writeFile(failingCollectionPath, JSON.stringify(failingCollection(), null, 2));
+  const failingCollectionPath = join(
+    scratch,
+    "failing.postman_collection.json",
+  );
+  await writeFile(
+    failingCollectionPath,
+    JSON.stringify(failingCollection(), null, 2),
+  );
   const failingConfigPath = join(scratch, "failing-config.json");
   await writeFile(
     failingConfigPath,
-    JSON.stringify({ collection: failingCollectionPath, environment: environmentPath }),
+    JSON.stringify({
+      collection: failingCollectionPath,
+      environment: environmentPath,
+    }),
   );
 
-  const validatedCollectionPath = join(scratch, "validated.postman_collection.json");
-  await writeFile(validatedCollectionPath, JSON.stringify(validatedCollection(), null, 2));
+  const validatedCollectionPath = join(
+    scratch,
+    "validated.postman_collection.json",
+  );
+  await writeFile(
+    validatedCollectionPath,
+    JSON.stringify(validatedCollection(), null, 2),
+  );
   const validatedConfigPath = join(scratch, "validated-config.json");
   await writeFile(
     validatedConfigPath,
@@ -161,7 +200,12 @@ async function writeFixtures(scratch, baseUrl) {
     JSON.stringify({
       collection: collectionPath,
       environment: environmentPath,
-      secrets: [{ variable: "token", secret: { provider: "env", name: "PTU_VERIFY_SECRET" } }],
+      secrets: [
+        {
+          variable: "token",
+          secret: { provider: "env", name: "PTU_VERIFY_SECRET" },
+        },
+      ],
     }),
   );
 
@@ -183,30 +227,57 @@ async function driveCli(paths, out) {
   const transcript = [];
 
   const help = await runCli(["--help"]);
-  evidence.help = { exitCode: help.code, hasUsage: help.stdout.includes("Usage: postman-test-utils run") };
+  evidence.help = {
+    exitCode: help.code,
+    hasUsage: help.stdout.includes("Usage: postman-test-utils run"),
+  };
   transcript.push(`$ node cli.js --help -> exit ${help.code}`);
 
   const success = await runCli(["run", "--config", paths.configPath]);
-  evidence.run_success = { exitCode: success.code, stdout: success.stdout.trim() };
-  transcript.push(`$ node cli.js run --config <config> -> exit ${success.code}`);
+  evidence.run_success = {
+    exitCode: success.code,
+    stdout: success.stdout.trim(),
+  };
+  transcript.push(
+    `$ node cli.js run --config <config> -> exit ${success.code}`,
+  );
   transcript.push(success.stdout.trim());
 
   const failure = await runCli(["run", "--config", paths.failingConfigPath]);
-  evidence.run_failure = { exitCode: failure.code, stderr: failure.stderr.trim() };
-  transcript.push(`$ node cli.js run --config <failing-config> -> exit ${failure.code}`);
+  evidence.run_failure = {
+    exitCode: failure.code,
+    stderr: failure.stderr.trim(),
+  };
+  transcript.push(
+    `$ node cli.js run --config <failing-config> -> exit ${failure.code}`,
+  );
   transcript.push(failure.stderr.trim());
 
-  const validated = await runCli(["run", "--config", paths.validatedConfigPath]);
+  const validated = await runCli([
+    "run",
+    "--config",
+    paths.validatedConfigPath,
+  ]);
   evidence.validation_run = {
     exitCode: validated.code,
     stdout: validated.stdout.trim(),
-    assertions: Number((validated.stdout.match(/(\d+) assertion\(s\)/) ?? [0, "0"])[1]),
+    assertions: Number(
+      (validated.stdout.match(/(\d+) assertion\(s\)/) ?? [0, "0"])[1],
+    ),
   };
-  transcript.push(`$ node cli.js run --config <validated-config> -> exit ${validated.code}`);
+  transcript.push(
+    `$ node cli.js run --config <validated-config> -> exit ${validated.code}`,
+  );
   transcript.push(validated.stdout.trim());
 
   const emittedPath = join(out, "emitted.postman_collection.json");
-  const emit = await runCli(["run", "--emit", emittedPath, "--config", paths.validationConfigPath]);
+  const emit = await runCli([
+    "run",
+    "--emit",
+    emittedPath,
+    "--config",
+    paths.validationConfigPath,
+  ]);
   const emitted = JSON.parse(await readFile(emittedPath, "utf8"));
   const emittedExec = emitted.item[0].event[0].script.exec;
   evidence.emit = {
@@ -215,16 +286,29 @@ async function driveCli(paths, out) {
     preludePresent: emittedExec[0].includes("requestValidation"),
     execLines: emittedExec.length,
   };
-  transcript.push(`$ node cli.js run --emit <out> --config <config> -> exit ${emit.code}`);
+  transcript.push(
+    `$ node cli.js run --emit <out> --config <config> -> exit ${emit.code}`,
+  );
   transcript.push(emit.stdout.trim());
 
-  const emittedSecretPath = join(out, "emitted-secret-free.postman_collection.json");
-  const emitSecret = await runCli(["run", "--emit", emittedSecretPath, "--config", paths.secretConfigPath], {
-    PTU_VERIFY_SECRET: FIXTURE_VALUE,
-  });
+  const emittedSecretPath = join(
+    out,
+    "emitted-secret-free.postman_collection.json",
+  );
+  const emitSecret = await runCli(
+    ["run", "--emit", emittedSecretPath, "--config", paths.secretConfigPath],
+    {
+      PTU_VERIFY_SECRET: FIXTURE_VALUE,
+    },
+  );
   const emittedSecretText = await readFile(emittedSecretPath, "utf8");
-  evidence.emit_secret = { exitCode: emitSecret.code, secretAbsent: !emittedSecretText.includes(FIXTURE_VALUE) };
-  transcript.push(`$ node cli.js run --emit <out> --config <secret-config> -> exit ${emitSecret.code}`);
+  evidence.emit_secret = {
+    exitCode: emitSecret.code,
+    secretAbsent: !emittedSecretText.includes(FIXTURE_VALUE),
+  };
+  transcript.push(
+    `$ node cli.js run --emit <out> --config <secret-config> -> exit ${emitSecret.code}`,
+  );
 
   return { evidence, transcript };
 }
@@ -238,7 +322,10 @@ async function driveLibrary(paths, baseUrl) {
   const engine = await import(pathToFileURL(engineDist).href);
   const libraryResult = await engine.runCollection({
     collection: paths.collectionPath,
-    environment: { name: "local", values: [{ key: "baseUrl", value: baseUrl, enabled: true }] },
+    environment: {
+      name: "local",
+      values: [{ key: "baseUrl", value: baseUrl, enabled: true }],
+    },
   });
   evidence.library_run = {
     runner: libraryResult.runner,
@@ -253,7 +340,9 @@ async function driveLibrary(paths, baseUrl) {
 
   const source = healthCollection();
   const before = JSON.stringify(source);
-  const augmented = engine.withHelpers(source, [{ name: "sign", body: "function (payload) { return payload; }" }]);
+  const augmented = engine.withHelpers(source, [
+    { name: "sign", body: "function (payload) { return payload; }" },
+  ]);
   const augmentedExec = augmented.item[0].event[0].script.exec;
   evidence.library_withHelpers = {
     mutated: JSON.stringify(source) !== before,
@@ -267,7 +356,10 @@ async function driveLibrary(paths, baseUrl) {
   process.env.PTU_VERIFY_SECRET = FIXTURE_VALUE;
   const secrets = await import(pathToFileURL(secretsDist).href);
   const resolved = await secrets.resolveSecrets([
-    { variable: "token", secret: { provider: "env", name: "PTU_VERIFY_SECRET" } },
+    {
+      variable: "token",
+      secret: { provider: "env", name: "PTU_VERIFY_SECRET" },
+    },
   ]);
   const revealed = secrets.reveal(resolved.values.get("token"));
   evidence.library_secrets = {
@@ -285,8 +377,16 @@ async function driveLibrary(paths, baseUrl) {
   ];
   const secretResult = await engine.runCollection({
     collection: secretCollection,
-    environment: { name: "local", values: [{ key: "baseUrl", value: baseUrl, enabled: true }] },
-    secrets: [{ variable: "token", secret: { provider: "env", name: "PTU_VERIFY_SECRET" } }],
+    environment: {
+      name: "local",
+      values: [{ key: "baseUrl", value: baseUrl, enabled: true }],
+    },
+    secrets: [
+      {
+        variable: "token",
+        secret: { provider: "env", name: "PTU_VERIFY_SECRET" },
+      },
+    ],
   });
   evidence.library_secret_run = {
     success: secretResult.success,
@@ -312,32 +412,48 @@ async function driveLibrary(paths, baseUrl) {
 
 function evaluateChecks(evidence) {
   return {
-    "help exits 0 with usage": evidence.help?.exitCode === 0 && evidence.help?.hasUsage === true,
+    "help exits 0 with usage":
+      evidence.help?.exitCode === 0 && evidence.help?.hasUsage === true,
     "run success exits 0":
       evidence.run_success?.exitCode === 0 &&
-      /newman: 1 iteration\(s\), 1 request\(s\), 1 assertion\(s\), 0 failed/.test(evidence.run_success?.stdout ?? ""),
+      /newman: 1 iteration\(s\), 1 request\(s\), 1 assertion\(s\), 0 failed/.test(
+        evidence.run_success?.stdout ?? "",
+      ),
     "run failure exits 1":
-      evidence.run_failure?.exitCode === 1 && (evidence.run_failure?.stderr ?? "").includes("always fails"),
+      evidence.run_failure?.exitCode === 1 &&
+      (evidence.run_failure?.stderr ?? "").includes("always fails"),
     "validation prelude passes":
-      evidence.validation_run?.exitCode === 0 && (evidence.validation_run?.assertions ?? 0) >= 2,
+      evidence.validation_run?.exitCode === 0 &&
+      (evidence.validation_run?.assertions ?? 0) >= 2,
     "emit bakes the prelude":
-      evidence.emit?.exitCode === 0 && evidence.emit?.preludePresent === true && (evidence.emit?.execLines ?? 0) >= 2,
+      evidence.emit?.exitCode === 0 &&
+      evidence.emit?.preludePresent === true &&
+      (evidence.emit?.execLines ?? 0) >= 2,
     "emit never writes the secret": evidence.emit_secret?.secretAbsent === true,
-    "library run succeeds": evidence.library_run?.success === true && evidence.library_run?.requests === 1,
+    "library run succeeds":
+      evidence.library_run?.success === true &&
+      evidence.library_run?.requests === 1,
     "library merges the secret":
-      evidence.library_secret_run?.success === true && evidence.library_secret_run?.failedAssertions === 0,
+      evidence.library_secret_run?.success === true &&
+      evidence.library_secret_run?.failedAssertions === 0,
     "secret resolves in memory":
-      evidence.library_secrets?.matches === true && evidence.library_secrets?.isString === true,
+      evidence.library_secrets?.matches === true &&
+      evidence.library_secrets?.isString === true,
     "withHelpers copies without mutating":
-      evidence.library_withHelpers?.mutated === false && evidence.library_withHelpers?.preludeFirst === true,
+      evidence.library_withHelpers?.mutated === false &&
+      evidence.library_withHelpers?.preludeFirst === true,
     "invalid request throws at the boundary":
-      evidence.library_invalid?.name === "InvalidRunRequestError" && evidence.library_invalid?.field === "collection",
+      evidence.library_invalid?.name === "InvalidRunRequestError" &&
+      evidence.library_invalid?.field === "collection",
   };
 }
 
 async function main() {
   const argv = process.argv.slice(2);
-  const out = resolve(repoRoot, argumentValue(argv, "--out") ?? "artifacts/verify/postman-test-utils");
+  const out = resolve(
+    repoRoot,
+    argumentValue(argv, "--out") ?? "artifacts/verify/postman-test-utils",
+  );
   await mkdir(out, { recursive: true });
   const scratch = join(out, ".scratch");
   await rm(scratch, { recursive: true, force: true });
@@ -371,7 +487,10 @@ async function main() {
   const passed = Object.values(checks).every(Boolean);
 
   const report = { passed, checks, evidence };
-  await writeFile(join(out, "evidence.json"), `${JSON.stringify(report, null, 2)}\n`);
+  await writeFile(
+    join(out, "evidence.json"),
+    `${JSON.stringify(report, null, 2)}\n`,
+  );
   await writeFile(join(out, "transcript.txt"), `${transcript.join("\n")}\n`);
 
   console.log(JSON.stringify(report, null, 2));

@@ -12,3 +12,7 @@ Index for this repository.
 
 - [GitHub Action](examples/github-action.yml).
 - [Infisical](examples/infisical.yml).
+
+## Exceptions
+
+- [Exceptions](exceptions.md) records the standard rules this repository does not meet yet.
