@@ -21,7 +21,7 @@ A TypeScript monorepo that runs Postman collections offline and validates respon
 - Publishing goes to npm from `dist/` and to JSR from source, in dependency order. See `docs/publishing.md`.
 - Docs: `docs/usage.md`, `docs/design.md`, `docs/publishing.md`. `docs/exceptions.md` records the standard rules this repository does not meet yet.
 - Skills: `.agents/skills/verify` holds the verification skill and `.claude/skills/verify` is a relative symlink to it. `just agent-files` checks both.
-- Hooks: `just hooks` points `core.hooksPath` at `.githooks`, whose `pre-push` refuses a push to `main`. The ruleset is the real gate.
+- Hooks: `just hooks` installs the shared Lefthook jobs from `simpsonm09-projects/.github` at the `hooks-v2` tag; `lefthook-local.yml` is git-ignored. Never skip a hook: no `LEFTHOOK=0`, no `--no-verify`, and never create `lefthook-local.yml` (C7.11). The ruleset is the real gate.
 
 ## Skills
 
