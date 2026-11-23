@@ -23,7 +23,8 @@ The engine runs collection v2.1 JSON through newman. That covers Postman 11 and 
 
 ```bash
 just install
-just verify
+just deps
+just check
 ```
 
 To run a collection, see [`docs/usage.md`](docs/usage.md).
@@ -32,11 +33,15 @@ To run a collection, see [`docs/usage.md`](docs/usage.md).
 
 | Command | Does |
 | --- | --- |
-| `just install` | Installs the workspace dependencies. |
+| `just install` | Installs the pinned tools. |
+| `just deps` | Installs the workspace dependencies with `npm ci`. |
+| `just fmt-check` | Fails when a source is not Biome-formatted. |
 | `just typecheck` | Typechecks every package. |
 | `just build` | Builds every package into `dist/`. |
 | `just test` | Runs the test suite. |
-| `just verify` | Typechecks, builds, and tests. |
+| `just check` | Runs everything CI requires: format, lint, typecheck, build, and tests. |
+| `just hooks` | Installs the `pre-push` guard that refuses a push to `main`. |
+| `just agent-files` | Checks the skill tree and its Claude Code links. |
 | `just smoke` | Runs the installed-layout smoke test. |
 | `just run <config>` | Runs a collection through the built CLI. |
 | `just emit <config> <out>` | Writes a collection with the validation prelude baked in. |

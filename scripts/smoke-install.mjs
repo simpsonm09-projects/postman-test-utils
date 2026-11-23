@@ -11,17 +11,28 @@ import { fileURLToPath } from "node:url";
 
 const repo = dirname(dirname(fileURLToPath(import.meta.url)));
 const consumer = join(tmpdir(), "ptu-smoke-install");
-const cli = join(consumer, "node_modules", "postman-test-utils", "dist", "cli.js");
+const cli = join(
+  consumer,
+  "node_modules",
+  "postman-test-utils",
+  "dist",
+  "cli.js",
+);
 
 async function installPackage(sourceDir, targetDir) {
   await mkdir(targetDir, { recursive: true });
   await cp(join(sourceDir, "package.json"), join(targetDir, "package.json"));
-  await cp(join(sourceDir, "dist"), join(targetDir, "dist"), { recursive: true });
+  await cp(join(sourceDir, "dist"), join(targetDir, "dist"), {
+    recursive: true,
+  });
 }
 
 function runCli(args, cwd) {
   return new Promise((resolve) => {
-    const child = spawn(process.execPath, [cli, ...args], { cwd, windowsHide: true });
+    const child = spawn(process.execPath, [cli, ...args], {
+      cwd,
+      windowsHide: true,
+    });
     let stdout = "";
     let stderr = "";
     child.stdout.on("data", (chunk) => (stdout += chunk));

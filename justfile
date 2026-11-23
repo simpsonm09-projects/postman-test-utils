@@ -7,9 +7,21 @@ set windows-shell := ["powershell.exe", "-NoLogo", "-NoProfile", "-Command"]
 default:
     @just --list
 
-# Install workspace dependencies.
+# Install the pinned tools.
 install:
-    npm install
+    mise install
+
+# Install the workspace dependencies from the lockfile.
+deps:
+    mise exec -- npm ci
+
+# Format the sources with Biome.
+fmt:
+    mise exec -- biome format --write .
+
+# Fail when a source is not Biome-formatted.
+fmt-check:
+    mise exec -- biome format .
 
 # Run every linter over the tracked files.
 lint:
@@ -25,47 +37,56 @@ aislop:
 
 # Typecheck every package.
 typecheck:
-    npm run typecheck
+    mise exec -- npm run typecheck
 
 # Build every package into dist/.
 build:
-    npm run build
+    mise exec -- npm run build
 
 # Run the test suite.
 test:
-    npm test
+    mise exec -- npm test
 
 # Run the tests and write an lcov report to coverage/lcov.info.
 coverage:
-    npm ci
-    npm run coverage
+    mise exec -- npm ci
+    mise exec -- npm run coverage
 
-# Typecheck, build, and test.
-verify:
-    npm run verify
+# Everything CI requires.
+check: fmt-check lint typecheck build test
+
+# Historical alias for `check`, kept for the support template.
+verify: check
 
 # Build, then run the installed-layout smoke test.
 smoke:
-    npm run smoke
+    mise exec -- npm run smoke
 
 # Preview a publish for all three packages.
 publish-dry:
-    npm run publish:dry-run
+    mise exec -- npm run publish:dry-run
 
 # Publish all three packages in dependency order.
 publish:
-    npm run publish:packages
+    mise exec -- npm run publish:packages
 
 # Run a collection through the built CLI. Example: just run postman-test-utils.config.json
 run config: build
-    node packages/postman-test-utils/dist/cli.js run --config '{{config}}'
+    mise exec -- node packages/postman-test-utils/dist/cli.js run --config '{{config}}'
 
 # Write a collection with the validation prelude baked in.
 # Example: just emit postman-test-utils.config.json collection.with-validation.json
 emit config out: build
-    node packages/postman-test-utils/dist/cli.js run --emit '{{out}}' --config '{{config}}'
+    mise exec -- node packages/postman-test-utils/dist/cli.js run --emit '{{out}}' --config '{{config}}'
 
+# Install the guarded git hook.
+hooks:
+    git config --local core.hooksPath .githooks
+
+# Check the .agents/skills tree and its .claude/skills links.
+agent-files:
+    mise exec -- node scripts/agent-files.mjs
 
 # Prune remote-tracking refs and delete local branches merged into main.
 prune:
-    node scripts/prune.mjs
+    mise exec -- node scripts/prune.mjs
