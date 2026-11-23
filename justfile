@@ -1,7 +1,6 @@
-# Cross-platform task runner for humans and agents. `just --list` shows every
+# Task runner for humans and agents. `just --list` shows every
 # recipe. Each recipe delegates to an npm script or a Node script, so the logic
-# lives in one place and works on Windows, macOS, and Linux.
-set windows-shell := ["powershell.exe", "-NoLogo", "-NoProfile", "-Command"]
+# lives in one place and works on Linux.
 
 # List the recipes.
 default:
