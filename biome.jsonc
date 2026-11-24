@@ -1,4 +1,12 @@
 {
+  // Respect `.gitignore`: the suite writes `coverage/` and the build writes
+  // `dist/`, and neither is source. Without this, a second `fmt-check` run
+  // after a test would fail on generated files the hook itself produced.
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
   "formatter": {
     "indentStyle": "space",
     "indentWidth": 2
